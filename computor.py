@@ -27,6 +27,7 @@ def simplify(equation):
     translation_table = str.maketrans('', '', " *-+")
     left = equation.split('=')[0]
     right = equation.split('=')[1]
+    degree = more_than_2(left, right)
     sign = ""
     
     sign = left.split('X^0')[0][0] if left.split('X^0')[0][0] == "-" else ""
@@ -34,10 +35,14 @@ def simplify(equation):
     c_left = c_left * -1 if sign == "-" else c_left
     left, next = update_left_right(left, 'X^0', 'X^1')
 
-    sign = (left.split('X^1')[0][0])
-    b_left = float(left.split('X^1')[0].translate(translation_table) if next == True else '0')
-    b_left = b_left * -1 if sign == "-" else b_left
-    left, next = update_left_right(left, 'X^1', 'X^2')
+    try:
+        sign = (left.split('X^1')[0][0])
+        b_left = float(left.split('X^1')[0].translate(translation_table) if next == True else '0')
+        b_left = b_left * -1 if sign == "-" else b_left
+        left, next = update_left_right(left, 'X^1', 'X^2')
+    except:
+        b_left = 0
+        sign = ""
 
     try:
         sign = (left.split('X^2')[0][0])
@@ -54,16 +59,16 @@ def simplify(equation):
     right, next = update_left_right(right, 'X^0', 'X^1')
 
     try:
-        sign (right.split('X^1')[0][0])
+        sign = right.split('X^1')[0][0]
         b_right = float(right.split('X^1')[0].translate(translation_table) if next == True else '0')
         b_right = b_right * -1 if sign == "-" else b_right
         right, next = update_left_right(right, 'X^1', 'X^2')
-    except:
+    except Exception as e:
         b_right = 0
         sign = ""
 
     try:
-        sign = (right.split('X^2')[0][0])
+        sign = right.split('X^2')[0][0]
         a_right = float(right.split('X^2')[0].translate(translation_table) if next == True else '0')
         a_right = a_right * -1 if sign == "-" else a_right
         right, next = update_left_right(right, 'X^2', "")
@@ -78,10 +83,7 @@ def simplify(equation):
 
     translation_table = str.maketrans('+-', '-+')
     right = right.translate(translation_table)
-
-    # right = right + " " if right != "" else right.strip()
-    # left = left + " " if left != "" else left.strip()
-    degree = more_than_2(left, right)
+    right = "" if right.replace(" ", "") == "0" else right
     print("Reduced form:", c, "* X^0" + formate(b, degree, 1) + formate(a, degree, 2) + left + right + " = 0")
 
     return a, b, c, degree
@@ -92,20 +94,23 @@ def formate(value, max_degree, degree):
         string = " - " + str(value * -1) + " * X^" + str(degree)
     else:
         string = " + " + str(value) + " * X^" + str(degree)
-    if value == 0 and degree == max_degree:
+    if value == 0 and degree >= max_degree:
         string = ""
-    if degree == 2 and max_degree > 2:
+    if degree == max_degree:
         string = string + " "
     return string
 
 def more_than_2(left, right):
-    degree = 2
-    for l in left:
-        if l == 'X' and left[left.index(l) + 1] == '^':
-            degree = int(left[left.index(l) + 2]) if int(left[left.index(l) + 2]) > degree else degree
-    for l in right:
-        if l == 'X' and right[right.index(l) + 1] == '^':
-            degree = int(right[right.index(l) + 2]) if int(right[right.index(l) + 2]) > degree else degree
+    degree = 0
+    for i in range(len(left)):
+        l = left[i]
+        if l == 'X' and i + 2 < len(left) and left[i + 1] == '^':
+            degree = int(left[i + 2]) if int(left[i + 2]) > degree else degree
+
+    for i in range(len(right)):
+        l = right[i]
+        if l == 'X' and i + 2 < len(right) and right[i + 1] == '^':
+            degree = int(right[i + 2]) if int(right[i + 2]) > degree else degree
     return degree
     
 
@@ -129,27 +134,34 @@ def compute_delta(a, b, c):
     return delta
 
 def main():
-    if (len(sys.argv) != 2):
-        print('Usage: python3 computor.py "equation"')
-        sys.exit(1)
-    args = parsing()
-    a, b, c, degree = simplify(args.equation)
-    if degree > 2 :
+    try:
+        if (len(sys.argv) != 2):
+            print('Usage: python3 computor.py "equation"')
+            sys.exit(1)
+        args = parsing()
+        a, b, c, degree = simplify(args.equation)
+        if degree > 2 :
+            print("Polynomial degree:", degree)
+            print("The polynomial degree is strictly greater than 2, I can't solve.")
+            return
+        if a == 0 and b == 0:
+            print("Polynomial degree: 0")
+            if c != 0:
+                print("The equation is inconsistent, there is no solution")
+                return
+            print("The solution is:")
+            print("All real numbers are solutions")
+            return
+        if a == 0:
+            print("Polynomial degree: 1")
+            print("The solution is:")
+            print("X =", -c / b)
+            return
         print("Polynomial degree:", degree)
-        print("The polynomial degree is strictly greater than 2, I can't solve.")
-        sys.exit(1)
-    if a == 0 and b == 0:
-        print("Polynomial degree: 0")
-        print("The solution is:")
-        print("All real numbers are solutions")
-        exit(0)
-    if a == 0:
-        print("Polynomial degree: 1")
-        print("The solution is:")
-        print("X =", -c / b)
-        exit(0)
-    print("Polynomial degree:", degree)
-    compute_delta(a, b, c)
+        compute_delta(a, b, c)
+    except :
+        print("Parse error, please check your input")
+        print("Equation must be in the form of 'x * X^0 + y * X^1 + z * X^2 = w * X^0 + v * X^1 + u * X^2'")
 
 if __name__ == '__main__':
     main()
