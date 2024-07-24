@@ -1,6 +1,21 @@
 import argparse
 import sys
 import re
+import matplotlib.pyplot as plt
+import numpy as np
+
+def graph(a, b, c):
+    x = np.linspace(-10, 10, 400)
+    
+    y = a * x**2 + b * x + c
+    
+    plt.plot(x, y, label=f'{a}x^2 + {b}x + {c}')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.title('Plot of the quadratic function')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 def parsing():
     parser = argparse.ArgumentParser(description='ComputorV1')
@@ -144,19 +159,45 @@ def compute_delta(a, b, c):
     print("Δ =", delta)
     if delta > 0:
         print("Discriminant is strictly positive, the two solutions are:")
-        print("X1 =", (-b + delta ** 0.5) / (2 * a))
-        print("X2 =", (-b - delta ** 0.5) / (2 * a))
+        x1 = (-b + delta ** 0.5) / (2 * a)
+        x2 = (-b - delta ** 0.5) / (2 * a)
+        if x1.is_integer() and x2.is_integer():
+            print("X1 =", (-b + delta ** 0.5) / (2 * a))
+            print("X2 =", (-b - delta ** 0.5) / (2 * a))
+        else:
+            if (-b + delta ** 0.5).is_integer() and (2 * a).is_integer():
+                num, den = reduce_fraction(-b + delta ** 0.5, 2 * a)
+                print("X1 =", -num, "/", den)
+            else:
+                print("X1 = ({0} + √{1}) / {2}".format(-b, delta, 2 * a))
+            if (-b - delta ** 0.5).is_integer() and (2 * a).is_integer():
+                num, den = reduce_fraction(-b - delta ** 0.5, 2 * a)
+                print("X2 =", num, "/", den)
+            else:
+                print("X2 = ({0} - √{1}) / {2}".format(-b, delta, 2 * a))
     elif delta < 0:
         print("Discriminant is strictly negative, the two solutions (in ℂ) are:")
         print("Z1 = (", -b ,"- i *",  (-delta) ** 0.5, ") /", (2 * a))
         print("Z1 = (", -b ,"+ i *",  (-delta) ** 0.5, ") /", (2 * a))
-        # print("Z1 = (", -b / (2 * a) ,") - ( i * ",  (-delta) ** 0.5 / (2 * a), ")")
-        # print("Z2 = (", -b / (2 * a) ,") + ( i * ",  (-delta) ** 0.5 / (2 * a), ")")
 
     else :
         print("Discriminant is null, the solution is:")
         print("X =", -b / (2 * a))
+    graph(a, b, c)
     return delta
+
+def gcd(a, b):
+    while b:
+        a, b = b, a % b
+    return a
+
+def reduce_fraction(numerator, denominator):
+    if denominator == 0:
+        raise ValueError("Denominator cannot be zero")
+    gcd_value = gcd(numerator, denominator)
+    reduced_numerator = numerator // gcd_value
+    reduced_denominator = denominator // gcd_value
+    return reduced_numerator, reduced_denominator
 
 def main():
     try:
@@ -188,7 +229,16 @@ def main():
         if a == 0:
             print("Polynomial degree: 1")
             print("The solution is:")
-            print("X =", -c / b)
+            c, b = reduce_fraction(c, b)
+            x = -c / b
+            if x.is_integer():
+                print("X =", to_int_if_possible(-c / b))
+            else:
+                if c < 0:
+                    print("X = -" + str(c * -1) + " /", b)
+                else:
+                    print("X = -" + str(c) + " /", b)
+            graph(a, b, c)
             return
         print("Polynomial degree:", degree)
         compute_delta(a, b, c)
