@@ -177,8 +177,12 @@ def compute_delta(a, b, c):
                 print("X2 = ({0} - √{1}) / {2}".format(-b, delta, 2 * a))
     elif delta < 0:
         print("Discriminant is strictly negative, the two solutions (in ℂ) are:")
-        print("Z1 = (", -b ,"- i *",  (-delta) ** 0.5, ") /", (2 * a))
-        print("Z1 = (", -b ,"+ i *",  (-delta) ** 0.5, ") /", (2 * a))
+        if ((delta * -1) ** 0.5).is_integer():
+            print("Z1 = (", -b ,"- i *",  (-delta) ** 0.5, ") /", (2 * a))
+            print("Z1 = (", -b ,"+ i *",  (-delta) ** 0.5, ") /", (2 * a))
+        else:
+            print("Z1 = (", -b ,"- i * √",  -delta, ") /", (2 * a))
+            print("Z1 = (", -b ,"+ i * √",  -delta, ") /", (2 * a))
 
     else :
         print("Discriminant is null, the solution is:")
